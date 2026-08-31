@@ -57,7 +57,7 @@ Your Claude Code statusline already writes its state to a small JSON file. A tin
 │  Your Mac    │ ────────────► │  Android TV  (this app)     │
 │  Claude Code │  state.json   │                             │
 │  statusline  │  → serve.py   │  ┌───────────────────────┐  │
-└──────────────┘  (LAN :4040)  │  │  Compose for TV UI    │  │
+└──────────────┘  (LAN :4770)  │  │  Compose for TV UI    │  │
                                │  │  • Vinyl / album theme│  │
    Spotify Web API ──────────► │  │  • Claude companion   │  │
    football-data.org ────────► │  │  • Match / Race tiles │  │
@@ -211,12 +211,12 @@ writes — fields `state`, `label`, `project`, `startedAt`).
 1. **Status server** — `~/.claude/statusbar/serve.py` reads that file and streams changes over your
    LAN (Server-Sent Events). Install it as a LaunchAgent so it auto-starts on login. Verify:
    ```bash
-   curl http://127.0.0.1:4040/status
+   curl http://127.0.0.1:4770/status
    ```
 2. **Point the app at your Mac** — find your Mac's LAN IP (`System Settings → Wi-Fi → Details → IP`),
    set it in `secrets.properties`, then rebuild + reinstall (Steps 3–4):
    ```
-   CLAUDE_STATUS_URL=http://192.168.1.40:4040/status
+   CLAUDE_STATUS_URL=http://192.168.1.40:4770/status
    ```
 3. **Reliability:** reserve a **static IP** for your Mac in your router so the address never changes,
    and keep the Mac **awake** on the same Wi-Fi. Otherwise the companion just shows "offline".
@@ -224,6 +224,60 @@ writes — fields `state`, `label`, `project`, `startedAt`).
 The creature: **typing** while working · **alert + "!"** when it needs you · **happy** when done ·
 **asleep** when idle/stopped — plus a soft chime on the "needs you" and "done" transitions. Blank
 `CLAUDE_STATUS_URL` simply hides the card; everything else still works.
+
+## ⌚ CLAWD on your wrist
+
+<div align="center">
+
+![CLAWD on a Fossil Gen 6](docs/clawd-watch.png)
+
+</div>
+
+The same creature, on a watch. `wear/` is a standalone Wear OS 3 app that holds its own SSE
+connection to the very same `serve.py` — so a state change lands on your wrist in well under a
+second, with no phone app in between and nothing polling.
+
+It is designed around the circle rather than fighting it:
+
+- **The bezel is the status indicator.** One slow comet orbiting means *thinking*; two fast ones
+  mean *working*; the whole ring breathing amber means Claude is *blocked on you*; a broken ring of
+  dashes means the link is down. Readable from across a desk without reading a word.
+- **Curved text on the top and bottom arcs** reclaims the band a rectangular layout can only ever
+  waste: the name on top, and the project plus a live elapsed timer along the bottom.
+- **The eyes are the state.** They sweep left-to-right like reading a line while a tool runs, drift
+  up and away while thinking, lock onto you and pulse when a run needs an answer, and squint happily
+  when a turn lands. Every motion is computed from one frame clock, so nothing can fall out of sync.
+- **It buzzes** on the transition into *waiting* or *permission* — once, not continuously.
+
+### Running it
+
+```bash
+./gradlew :wear:assembleDebug
+adb connect <watch-ip>:5555        # Settings › System › About › Versions › Build number ×7
+adb -s <watch-ip>:5555 install -r wear/build/outputs/apk/debug/wear-debug.apk
+adb -s <watch-ip>:5555 shell am start -n com.clawd.watch/.MainActivity
+```
+
+The watch must be on the **same Wi-Fi as your Mac** — over Bluetooth it proxies through your phone
+and a LAN address is unreachable. (A Fossil Gen 6 is 2.4GHz-only, so join the 2.4G SSID.)
+
+### Leaving it on
+
+CLAWD is built to live on its charger as a desk display. Two things make that work, and both are
+counter-intuitive enough to be worth stating:
+
+- **Ambient mode is what keeps it up, not `KEEP_SCREEN_ON`.** Without an `AmbientLifecycleObserver`
+  a docked Gen 6 dozes and *replaces* the app with the watch face. With one, the activity stays on
+  screen indefinitely — so the app registers for ambient and renders a dimmed but complete face
+  there rather than treating it as an afterthought.
+- **Raise the screen timeout**, which ships at 10 seconds:
+  `adb shell settings put system screen_off_timeout 1800000` (restore with `10000`).
+
+The panel is OLED and this thing is meant to sit lit for days, so the whole composition creeps
+around a slow Lissajous path a few pixels wide — invisible while you watch it, enough to keep the
+ring and the curved text from staining the screen.
+
+Off the charger it will flatten the battery in a few hours. That is the trade it exists to make.
 
 ## 🩹 Troubleshooting
 
@@ -240,7 +294,8 @@ The creature: **typing** while working · **alert + "!"** when it needs you · *
 
 ## 📁 Project layout
 
-- **`app/`** — the Android app (Kotlin + Compose for TV)
+- **`app/`** — the Android TV app (Kotlin + Compose for TV)
+- **`wear/`** — **CLAWD**, the Wear OS companion (Kotlin + Compose for Wear OS)
 - **`CONFIG.md`** — every tunable (location, units, day/night dim, competition, poll intervals) + defaults
 - **`secrets.properties.example`** — template (copy to `secrets.properties`)
 - **`docs/`** — screenshots

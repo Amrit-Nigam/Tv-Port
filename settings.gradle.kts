@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "TvPortDashboard"
 include(":app")
+include(":wear")

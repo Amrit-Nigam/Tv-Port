@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher icon: the two eyes on a dark disc, matching the app's own face. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#12100E"
+        android:pathData="M24,24m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+    <path
+        android:fillColor="#E8DCC8"
+        android:pathData="M16,15h5a3,3 0,0 1,3 3v12a3,3 0,0 1,-3 3h-5a3,3 0,0 1,-3 -3v-12a3,3 0,0 1,3 -3z" />
+    <path
+        android:fillColor="#E8DCC8"
+        android:pathData="M27,15h5a3,3 0,0 1,3 3v12a3,3 0,0 1,-3 3h-5a3,3 0,0 1,-3 -3v-12a3,3 0,0 1,3 -3z" />
+    <path
+        android:fillColor="#12100E"
+        android:pathData="M17,21m-2.6,0a2.6,2.6 0,1 1,5.2 0a2.6,2.6 0,1 1,-5.2 0" />
+    <path
+        android:fillColor="#12100E"
+        android:pathData="M28,21m-2.6,0a2.6,2.6 0,1 1,5.2 0a2.6,2.6 0,1 1,-5.2 0" />
+</vector>

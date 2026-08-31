@@ -58,9 +58,9 @@ cp server/serve.py ~/.claude/statusbar/serve.py
 cp server/com.tvport.companion.plist.template ~/Library/LaunchAgents/com.tvport.companion.plist
 launchctl load ~/Library/LaunchAgents/com.tvport.companion.plist
 
-curl http://127.0.0.1:4040/battery   # verify
+curl http://127.0.0.1:4770/battery   # verify
 ```
-Point the app at your Mac's LAN IP in `secrets.properties` (`CLAUDE_STATUS_URL=http://<ip>:4040/status`).
+Point the app at your Mac's LAN IP in `secrets.properties` (`CLAUDE_STATUS_URL=http://<ip>:4770/status`).
 
 ### 2. (Optional) iPhone battery
 Pick whichever you want — they stack:
@@ -68,7 +68,7 @@ Pick whichever you want — they stack:
 - **USB** (charging while plugged): `brew install libimobiledevice`, then plug the phone in once,
   tap *Trust*, and run `idevicepair pair`.
 - **Wireless via Shortcut** (recommended): make an Apple Shortcut — **Get Battery Level** →
-  **Get Contents of URL** `http://<mac-ip>:4040/battery/phone?level=<BatteryLevel>` — and run it from
+  **Get Contents of URL** `http://<mac-ip>:4770/battery/phone?level=<BatteryLevel>` — and run it from
   Automations (charger connected/disconnected for the bolt, plus an app-open or time trigger to
   refresh the level).
 - **Hotspot**: nothing to do — automatic whenever the phone is near the Mac.
@@ -78,6 +78,6 @@ Pick whichever you want — they stack:
 connected to the Mac.
 
 ## Notes
-- Port is `4040` (edit `PORT` in `serve.py`).
+- Port is `4770` (edit `PORT` in `serve.py`).
 - Reserve a **static IP** for the Mac in your router so the dashboard URL never changes, and keep
   the Mac awake on the same Wi-Fi.

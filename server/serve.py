@@ -23,7 +23,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 STATE_PATH = os.path.expanduser("~/.claude/statusbar/state.json")
-PORT = 4040
+PORT = 4770
 # A busy state with no activity for this long == the run was stopped/interrupted (the Stop hook
 # doesn't fire on Ctrl-C / Esc), so we surface idle instead of a forever-spinning "working".
 # Liveness = max(state.ts, transcript mtime). 60s avoids false idles during long no-tool reasoning.
