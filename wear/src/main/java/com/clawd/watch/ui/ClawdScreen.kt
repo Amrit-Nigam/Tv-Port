@@ -1,5 +1,6 @@
 package com.clawd.watch.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,11 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -73,6 +76,19 @@ fun ClawdScreen(state: WatchState, ambient: AmbientUi, modifier: Modifier = Modi
     val driftX = sin(seconds * 0.0495f) * 5f
     val driftY = cos(seconds * 0.0706f) * 5f
 
+    // When the current state was entered. One-shot effects — the `done` burst, the ring drawing
+    // itself closed — key off this rather than off the clock, so they fire once on arrival
+    // instead of looping forever.
+    val kind = ui?.kind ?: ClaudeKind.IDLE
+    val phase = kind to state.online
+    var enteredAt by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(phase) { enteredAt = seconds }
+    val since = (seconds - enteredAt).coerceAtLeast(0f)
+
+    // Idle breathes. Applied to the whole composition, which is safe: the ring is inset 16px from
+    // the glass, so ±0.3% on a 416px face moves it about a pixel and can never clip.
+    val breath = idleBreath(kind, state.online, seconds, dimmed)
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -83,12 +99,20 @@ fun ClawdScreen(state: WatchState, ambient: AmbientUi, modifier: Modifier = Modi
             modifier = Modifier
                 .fillMaxSize()
                 .offset { IntOffset(driftX.roundToInt(), driftY.roundToInt()) }
+                .graphicsLayer { scaleX = breath; scaleY = breath }
                 // One alpha for the whole face rather than a dimmed variant of every element:
                 // ambient asks for fewer lit pixels, not a different design.
                 .alpha(if (dimmed) 0.55f else 1f),
             contentAlignment = Alignment.Center,
         ) {
-            StatusRing(state = state, t = seconds, calm = dimmed, modifier = Modifier.fillMaxSize())
+            StatusRing(state = state, t = seconds, since = since, calm = dimmed, modifier = Modifier.fillMaxSize())
+
+            // The per-state motion layer, between the bezel and the eyes. Every effect in it is
+            // bounded to 0.27 of the min dimension so it can never reach the label — see Motion.kt
+            // for the measurement that constrains it.
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawStateEffects(kind, state.online, seconds, since, dimmed)
+            }
 
             // Top arc: which project is running. Reads left-to-right over the top of the glass.
             CurvedLayout(
