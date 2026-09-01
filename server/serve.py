@@ -23,6 +23,12 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 STATE_PATH = os.path.expanduser("~/.claude/statusbar/state.json")
+# Optional quota reading for the CLAWD watch face's two bezel gauges. Claude Code does not write
+# usage/limit data anywhere on disk, so there is nothing to read automatically — drop a file here
+# and it is merged into /status and pushed over /events. Absent -> the watch draws empty gauges and
+# an em dash, which is the honest rendering of "no reading". Shape:
+#   {"sessionPct": 52, "weekPct": 10, "sessionReset": "9:50am", "weekReset": "may 18"}
+QUOTA_PATH = os.path.expanduser("~/.claude/statusbar/quota.json")
 PORT = 4770
 # A busy state with no activity for this long == the run was stopped/interrupted (the Stop hook
 # doesn't fire on Ctrl-C / Esc), so we surface idle instead of a forever-spinning "working".
@@ -115,6 +121,34 @@ def read_state():
     out["label"] = _label(eff, raw)
     if eff not in ("thinking", "tool"):
         out["startedAt"] = 0
+    out.update(read_quota())
+    return out
+
+
+def read_quota():
+    """Quota for the watch face's gauges, or empty if nothing is reporting.
+
+    Percentages are clamped to 0-100 and anything unparseable is dropped rather than defaulted:
+    a missing key must stay missing all the way to the face, so it can render "no reading" instead
+    of a confident zero.
+    """
+    try:
+        with open(QUOTA_PATH, "r") as f:
+            q = json.load(f)
+    except Exception:
+        return {}
+
+    out = {}
+    for key in ("sessionPct", "weekPct"):
+        try:
+            out[key] = max(0, min(100, int(q[key])))
+        except (KeyError, TypeError, ValueError):
+            pass
+    for key in ("sessionReset", "weekReset"):
+        v = q.get(key)
+        if isinstance(v, str) and v.strip():
+            # The row overflows the safe area if this is long, so keep it short at the source.
+            out[key] = v.strip()[:12]
     return out
 
 
